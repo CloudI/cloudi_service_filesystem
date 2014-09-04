@@ -608,7 +608,7 @@ request_header(MTime, Contents, FileHeaders, RequestInfo,
             case content_range_list_check(RangeList, Contents) of
                 {206, Headers} ->
                     {reply,
-                     Headers ++ FileHeaders ++
+                     Headers ++
                      cacheless_headers_data(NowTime, MTime, ETag, true),
                      <<>>, State};
                 {416, Headers} ->
@@ -643,7 +643,7 @@ request_header(MTime, Contents, FileHeaders, RequestInfo,
                     case content_range_list_check(RangeList, Contents) of
                         {206, Headers} ->
                             {reply,
-                             Headers ++ FileHeaders ++
+                             Headers ++
                              cache_headers_data(NowTime, MTime,
                                                 ETag, Cache, true),
                              <<>>, State};
@@ -688,7 +688,7 @@ request_read(MTime, Contents, FileHeaders, RequestInfo,
                     case content_range_read(RangeList, Contents) of
                         {206, Headers, Response} ->
                             {reply,
-                             Headers ++ FileHeaders ++
+                             Headers ++
                              cacheless_headers_data(NowTime, MTime, ETag,
                                                     UseHttpGetSuffix),
                              Response, State};
@@ -730,7 +730,7 @@ request_read(MTime, Contents, FileHeaders, RequestInfo,
                             case content_range_read(RangeList, Contents) of
                                 {206, Headers, Response} ->
                                     {reply,
-                                     Headers ++ FileHeaders ++
+                                     Headers ++
                                      cache_headers_data(NowTime, MTime,
                                                         ETag, Cache,
                                                         UseHttpGetSuffix),
@@ -957,7 +957,7 @@ request_append_file([{Range, Request} | RangeRequests],
             {ByteStart, ByteEnd}
     end,
     if
-        Start =< End, Start < ContentLength ->
+        Start =< End, Start =< ContentLength ->
             NewContents = if
                 End < ContentLength ->
                     StartBinBits = Start * 8,
@@ -968,11 +968,14 @@ request_append_file([{Range, Request} | RangeRequests],
                     <<StartBin/binary,
                       RequestBin/binary,
                       EndBin/binary>>;
-                true ->
+                Start < ContentLength ->
                     StartBinBits = Start * 8,
                     <<StartBin:StartBinBits/bitstring,
                       _/binary>> = Contents,
                     <<StartBin/binary,
+                      RequestBin/binary>>;
+                Start == ContentLength ->
+                    <<Contents/binary,
                       RequestBin/binary>>
             end,
             request_append_file(RangeRequests,
@@ -1509,7 +1512,7 @@ cache_status_1(ETag, KeyValues, MTime) ->
 cache_status_2(KeyValues, MTime) ->
     case cloudi_service:key_value_find(<<"if-modified-since">>, KeyValues) of
         {ok, DateTimeBinary} ->
-            case cloudi_service_filesystem_datetime:parse(DateTimeBinary) of
+            case cloudi_service_filesystem_parse:datetime(DateTimeBinary) of
                 {error, _} ->
                     cache_status_3(KeyValues, MTime);
                 DateTime when MTime > DateTime ->
@@ -1524,7 +1527,7 @@ cache_status_2(KeyValues, MTime) ->
 cache_status_3(KeyValues, MTime) ->
     case cloudi_service:key_value_find(<<"if-unmodified-since">>, KeyValues) of
         {ok, DateTimeBinary} ->
-            case cloudi_service_filesystem_datetime:parse(DateTimeBinary) of
+            case cloudi_service_filesystem_parse:datetime(DateTimeBinary) of
                 {error, _} ->
                     200;
                 DateTime when MTime =< DateTime ->
@@ -1586,7 +1589,7 @@ contents_ranges_read(ETag, KeyValues, MTime) ->
 contents_ranges_read_0(ETag, KeyValues, MTime) ->
     case cloudi_service:key_value_find(<<"range">>, KeyValues) of
         {ok, RangeData} ->
-            case cowboy_http:range(RangeData) of
+            case cloudi_service_filesystem_parse:range(RangeData) of
                 {error, badarg} ->
                     {400, undefined};
                 {<<"bytes">>, RangeList} ->
@@ -1604,7 +1607,7 @@ contents_ranges_read_1(RangeList, ETag, KeyValues, MTime) ->
         {ok, ETag} ->
             {206, RangeList};
         {ok, IfRangeData} ->
-            case cloudi_service_filesystem_datetime:parse(IfRangeData) of
+            case cloudi_service_filesystem_parse:datetime(IfRangeData) of
                 {error, _} ->
                     {410, undefined};
                 DateTime when MTime == DateTime ->
@@ -1696,13 +1699,18 @@ content_range_read([_ | L] = RangeList, Contents) ->
                        ContentLengthBin, ContentLength, Contents).
 
 content_range_read([], [{Headers, Response}], undefined, _, _, _) ->
-    {206, [{<<"status">>, <<"206">>} | Headers], Response};
+    {206,
+     [{<<"status">>, <<"206">>},
+      {<<"content-type">>, <<"application/octet-stream">>} |
+      Headers], Response};
 content_range_read([], Output, Boundary, _, _, _) ->
+    ResponseData = lists:reverse([cow_multipart:close(Boundary) |
+                                  Output]),
     {206,
      [{<<"status">>, <<"206">>},
       {<<"content-type">>,
        <<(<<"multipart/byteranges; boundary=">>)/binary, Boundary/binary>>}],
-     lists:reverse([cow_multipart:close(Boundary) | Output])};
+     erlang:iolist_to_binary(ResponseData)};
 content_range_read([{I, infinity} | RangeList], Output, Boundary,
                    ContentLengthBin, ContentLength, Contents) ->
     ByteStart = if
@@ -1769,7 +1777,9 @@ content_range_list_check([_ | L] = RangeList, Contents) ->
                              ContentLengthBin, ContentLength).
 
 content_range_list_check([], undefined, _, _) ->
-    {206, [{<<"status">>, <<"206">>}]};
+    {206,
+     [{<<"status">>, <<"206">>},
+      {<<"content-type">>, <<"application/octet-stream">>}]};
 content_range_list_check([], _, _, _) ->
     {206,
      [{<<"status">>, <<"206">>},
