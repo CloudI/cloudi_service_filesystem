@@ -1608,7 +1608,7 @@ contents_ranges_read_1(RangeList, ETag, KeyValues, MTime) ->
             case cloudi_service_filesystem_parse:datetime(IfRangeData) of
                 {error, _} ->
                     {410, undefined};
-                DateTime when MTime == DateTime ->
+                MTime ->
                     {206, RangeList};
                 _ ->
                     {410, undefined}
