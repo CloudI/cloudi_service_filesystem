@@ -9,7 +9,7 @@
 %%%
 %%% BSD LICENSE
 %%% 
-%%% Copyright (c) 2011-2014, Michael Truog <mjtruog at gmail dot com>
+%%% Copyright (c) 2011-2015, Michael Truog <mjtruog at gmail dot com>
 %%% All rights reserved.
 %%% 
 %%% Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,8 @@
 %%% DAMAGE.
 %%%
 %%% @author Michael Truog <mjtruog [at] gmail (dot) com>
-%%% @copyright 2011-2014 Michael Truog
-%%% @version 1.4.0 {@date} {@time}
+%%% @copyright 2011-2015 Michael Truog
+%%% @version 1.5.0 {@date} {@time}
 %%%------------------------------------------------------------------------
 
 -module(cloudi_service_filesystem).
@@ -157,6 +157,11 @@
 %%% External interface functions
 %%%------------------------------------------------------------------------
 
+-type agent() :: cloudi:agent().
+-type service_name() :: cloudi:service_name().
+-type timeout_milliseconds() :: cloudi:timeout_milliseconds().
+-type priority() :: cloudi:priority().
+
 %%-------------------------------------------------------------------------
 %% @doc
 %% ===Subscribe all service processes to be notified of file updates.===
@@ -164,14 +169,14 @@
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_all(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_all(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_all(Dispatcher, Name, NotifyName) ->
-    notify_all(Dispatcher, Name,
+notify_all(Agent, Name, NotifyName) ->
+    notify_all(Agent, Name,
                NotifyName, undefined, undefined).
 
 %%-------------------------------------------------------------------------
@@ -181,15 +186,15 @@ notify_all(Dispatcher, Name, NotifyName) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_all(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name(),
-                 NotifyTimeout :: cloudi_service:timeout_milliseconds()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_all(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name(),
+                 NotifyTimeout :: timeout_milliseconds()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_all(Dispatcher, Name, NotifyName, NotifyTimeout) ->
-    notify_all(Dispatcher, Name,
+notify_all(Agent, Name, NotifyName, NotifyTimeout) ->
+    notify_all(Agent, Name,
                NotifyName, NotifyTimeout, undefined).
 
 %%-------------------------------------------------------------------------
@@ -199,16 +204,16 @@ notify_all(Dispatcher, Name, NotifyName, NotifyTimeout) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_all(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name(),
-                 NotifyTimeout :: cloudi_service:timeout_milliseconds(),
-                 NotifyPriority :: cloudi_service:priority()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_all(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name(),
+                 NotifyTimeout :: timeout_milliseconds(),
+                 NotifyPriority :: priority()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_all(Dispatcher, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
-    notify(Dispatcher, Name,
+notify_all(Agent, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
+    notify(Agent, Name,
            NotifyName, NotifyTimeout, NotifyPriority, mcast_async).
 
 %%-------------------------------------------------------------------------
@@ -218,14 +223,14 @@ notify_all(Dispatcher, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_one(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_one(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_one(Dispatcher, Name, NotifyName) ->
-    notify_one(Dispatcher, Name,
+notify_one(Agent, Name, NotifyName) ->
+    notify_one(Agent, Name,
                NotifyName, undefined, undefined).
 
 %%-------------------------------------------------------------------------
@@ -235,15 +240,15 @@ notify_one(Dispatcher, Name, NotifyName) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_one(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name(),
-                 NotifyTimeout :: cloudi_service:timeout_milliseconds()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_one(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name(),
+                 NotifyTimeout :: timeout_milliseconds()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_one(Dispatcher, Name, NotifyName, NotifyTimeout) ->
-    notify_one(Dispatcher, Name,
+notify_one(Agent, Name, NotifyName, NotifyTimeout) ->
+    notify_one(Agent, Name,
                NotifyName, NotifyTimeout, undefined).
 
 %%-------------------------------------------------------------------------
@@ -253,16 +258,16 @@ notify_one(Dispatcher, Name, NotifyName, NotifyTimeout) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_one(Dispatcher :: cloudi_service:dispatcher() |
-                               cloudi:context(),
-                 Name :: cloudi_service:service_name(),
-                 NotifyName :: cloudi_service:service_name(),
-                 NotifyTimeout :: cloudi_service:timeout_milliseconds(),
-                 NotifyPriority :: cloudi_service:priority()) ->
-    {ok, binary()} | {error, any()}.
+-spec notify_one(Agent :: agent(),
+                 Name :: service_name(),
+                 NotifyName :: service_name(),
+                 NotifyTimeout :: timeout_milliseconds(),
+                 NotifyPriority :: priority()) ->
+    {{ok, binary()} | {error, any()},
+     NewAgent :: agent()}.
 
-notify_one(Dispatcher, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
-    notify(Dispatcher, Name,
+notify_one(Agent, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
+    notify(Agent, Name,
            NotifyName, NotifyTimeout, NotifyPriority, send_async).
 
 %%-------------------------------------------------------------------------
@@ -271,19 +276,19 @@ notify_one(Dispatcher, Name, NotifyName, NotifyTimeout, NotifyPriority) ->
 %% @end
 %%-------------------------------------------------------------------------
 
--spec notify_clear(Dispatcher :: cloudi_service:dispatcher() |
-                                 cloudi:context(),
-                   Name :: cloudi_service:service_name()) ->
-    ok | {error, any()}.
+-spec notify_clear(Agent :: agent(),
+                   Name :: service_name()) ->
+    {ok | {error, any()},
+     NewAgent :: agent()}.
 
-notify_clear(Dispatcher, Name) ->
-    case cloudi:send_sync(Dispatcher, Name, notify_clear) of
-        {error, _} = Error ->
+notify_clear(Agent, Name) ->
+    case cloudi:send_sync(Agent, Name, notify_clear) of
+        {{error, _}, _} = Error ->
             Error;
-        {ok, {error, _} = Error} ->
-            Error;
-        {ok, ok} ->
-            ok
+        {{ok, {error, _} = Error}, NewAgent} ->
+            {Error, NewAgent};
+        {{ok, ok}, NewAgent} ->
+            {ok, NewAgent}
     end.
 
 %%%------------------------------------------------------------------------
@@ -1147,7 +1152,7 @@ request_append(#file{contents = Contents,
              <<>>, State}
     end.
 
-notify(Dispatcher, Name, [I | _] = NotifyName,
+notify(Agent, Name, [I | _] = NotifyName,
        NotifyTimeout, NotifyPriority, Send)
     when is_list(NotifyName), is_integer(I),
          ((is_integer(NotifyTimeout) andalso NotifyTimeout >= 0 andalso
@@ -1155,16 +1160,16 @@ notify(Dispatcher, Name, [I | _] = NotifyName,
           (NotifyTimeout =:= undefined) orelse (NotifyTimeout =:= immediate)),
          ((is_integer(NotifyPriority) andalso NotifyPriority >= -128 andalso
            NotifyPriority =< 127) orelse (NotifyPriority =:= undefined)) ->
-    case cloudi:send_sync(Dispatcher, Name,
+    case cloudi:send_sync(Agent, Name,
                           #file_notify{send = Send,
                                        service_name = NotifyName,
                                        timeout = NotifyTimeout,
                                        priority = NotifyPriority}) of
-        {error, _} = Error ->
+        {{error, _}, _} = Error ->
             Error;
-        {ok, {error, _} = Error} ->
-            Error;
-        {ok, Contents} = Success when is_binary(Contents) ->
+        {{ok, {error, _} = Error}, NewAgent} ->
+            {Error, NewAgent};
+        {{ok, Contents}, _} = Success when is_binary(Contents) ->
             Success
     end.
 
