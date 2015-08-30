@@ -367,7 +367,7 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
             (WriteTruncateL == []) andalso (WriteAppendL == [])),
     false = lists:member($*, Prefix),
     PrefixLength = erlang:length(Prefix),
-    Directory = cloudi_service:environment_transform(DirectoryRaw),
+    Directory = cloudi_environment:transform(DirectoryRaw),
     DirectoryLength = erlang:length(Directory),
     ContentTypeLookup = if
         UseContentTypes =:= true ->
@@ -676,7 +676,7 @@ cloudi_service_terminate(_Reason, _Timeout, #state{}) ->
 request_header(MTimeI, Contents, FileHeaders, RequestInfo,
                #state{cache = undefined,
                       use_http_get_suffix = true} = State) ->
-    KeyValues = cloudi_service:request_info_key_value_parse(RequestInfo),
+    KeyValues = cloudi_request_info:key_value_parse(RequestInfo),
     NowTime = calendar:now_to_universal_time(os:timestamp()),
     ETag = cache_header_etag(MTimeI),
     case contents_ranges_read(ETag, KeyValues, MTimeI) of
@@ -709,7 +709,7 @@ request_header(MTimeI, Contents, FileHeaders, RequestInfo,
 request_header(MTimeI, Contents, FileHeaders, RequestInfo,
                #state{cache = Cache,
                       use_http_get_suffix = true} = State) ->
-    KeyValues = cloudi_service:request_info_key_value_parse(RequestInfo),
+    KeyValues = cloudi_request_info:key_value_parse(RequestInfo),
     NowTime = calendar:now_to_universal_time(os:timestamp()),
     ETag = cache_header_etag(MTimeI),
     case cache_status(ETag, KeyValues, MTimeI) of
@@ -794,7 +794,7 @@ request_read(MTimeI, Contents, FileHeaders, RequestInfo,
 request_read(MTimeI, Contents, FileHeaders, RequestInfo,
              #state{cache = Cache,
                     use_http_get_suffix = UseHttpGetSuffix} = State) ->
-    KeyValues = cloudi_service:request_info_key_value_parse(RequestInfo),
+    KeyValues = cloudi_request_info:key_value_parse(RequestInfo),
     NowTime = calendar:now_to_universal_time(os:timestamp()),
     ETag = cache_header_etag(MTimeI),
     case cache_status(ETag, KeyValues, MTimeI) of
@@ -880,7 +880,7 @@ request_truncate(#file{size = OldContentsSize,
         true ->
             KeyValues = cloudi_service:
                         request_info_key_value_parse(RequestInfo),
-            case cloudi_service:key_value_find(<<"range">>, KeyValues) of
+            case cloudi_key_value:find(<<"range">>, KeyValues) of
                 {ok, _} ->
                     {reply,
                      [{<<"status">>, <<"400">>}],
@@ -1829,7 +1829,7 @@ cache_status(ETag, KeyValues, {MTime, _}) ->
     cache_status_0(ETag, KeyValues, MTime).
 
 cache_status_0(ETag, KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"if-none-match">>, KeyValues) of
+    case cloudi_key_value:find(<<"if-none-match">>, KeyValues) of
         {ok, <<"*">>} ->
             cache_status_1(ETag, KeyValues, MTime);
         error ->
@@ -1844,7 +1844,7 @@ cache_status_0(ETag, KeyValues, MTime) ->
     end.
 
 cache_status_1(ETag, KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"if-match">>, KeyValues) of
+    case cloudi_key_value:find(<<"if-match">>, KeyValues) of
         {ok, <<"*">>} ->
             cache_status_2(KeyValues, MTime);
         error ->
@@ -1859,7 +1859,7 @@ cache_status_1(ETag, KeyValues, MTime) ->
     end.
 
 cache_status_2(KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"if-modified-since">>, KeyValues) of
+    case cloudi_key_value:find(<<"if-modified-since">>, KeyValues) of
         {ok, DateTimeBinary} ->
             case cloudi_service_filesystem_parse:datetime(DateTimeBinary) of
                 {error, _} ->
@@ -1874,7 +1874,7 @@ cache_status_2(KeyValues, MTime) ->
     end.
 
 cache_status_3(KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"if-unmodified-since">>, KeyValues) of
+    case cloudi_key_value:find(<<"if-unmodified-since">>, KeyValues) of
         {ok, DateTimeBinary} ->
             case cloudi_service_filesystem_parse:datetime(DateTimeBinary) of
                 {error, _} ->
@@ -1941,7 +1941,7 @@ contents_ranges_read(ETag, KeyValues, {MTime, _}) ->
     contents_ranges_read_0(ETag, KeyValues, MTime).
 
 contents_ranges_read_0(ETag, KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"range">>, KeyValues) of
+    case cloudi_key_value:find(<<"range">>, KeyValues) of
         {ok, RangeData} ->
             case cloudi_service_filesystem_parse:range(RangeData) of
                 {error, badarg} ->
@@ -1957,7 +1957,7 @@ contents_ranges_read_0(ETag, KeyValues, MTime) ->
     end.
 
 contents_ranges_read_1(RangeList, ETag, KeyValues, MTime) ->
-    case cloudi_service:key_value_find(<<"if-range">>, KeyValues) of
+    case cloudi_key_value:find(<<"if-range">>, KeyValues) of
         {ok, ETag} ->
             {206, RangeList};
         {ok, IfRangeData} ->
@@ -1974,21 +1974,21 @@ contents_ranges_read_1(RangeList, ETag, KeyValues, MTime) ->
     end.
 
 contents_ranges_append(ETag, KeyValues, {MTime, _}) ->
-    Id = case cloudi_service:key_value_find(<<"x-multipart-id">>,
+    Id = case cloudi_key_value:find(<<"x-multipart-id">>,
                                             KeyValues) of
         {ok, MultipartId} ->
             MultipartId;
         error ->
             undefined
     end,
-    Last = case cloudi_service:key_value_find(<<"x-multipart-last">>,
+    Last = case cloudi_key_value:find(<<"x-multipart-last">>,
                                               KeyValues) of
         {ok, <<"true">>} ->
             true;
         error ->
             false
     end,
-    Index = case cloudi_service:key_value_find(<<"x-multipart-index">>,
+    Index = case cloudi_key_value:find(<<"x-multipart-index">>,
                                                KeyValues) of
         {ok, IndexBin} ->
             erlang:binary_to_integer(IndexBin);
