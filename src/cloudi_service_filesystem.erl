@@ -102,6 +102,7 @@
 -define(DEFAULT_WRITE_APPEND,               []). % see below:
         % A list of file service names (provided by this service) that
         % will append to the file contents with the service request data
+        % (n.b., use to update with a range request in bytes)
 -define(DEFAULT_NOTIFY_ONE,                 []). % see below:
         % A list of {Name, NotifyName} entries that provide a mapping from
         % a file service name (provided by this service) to a
@@ -366,7 +367,6 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
             (UseContentTypes =:= false) andalso
             (WriteTruncateL == []) andalso (WriteAppendL == [])),
     false = lists:member($*, Prefix),
-    PrefixLength = erlang:length(Prefix),
     Directory = cloudi_environment:transform(DirectoryRaw),
     DirectoryLength = erlang:length(Directory),
     ContentTypeLookup = if
@@ -385,14 +385,12 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
     ReadLN = lists:map(fun(Read) ->
         case Read of
             [_ | _] = ReadName ->
-                true = lists:prefix(Prefix, ReadName),
-                {lists:nthtail(PrefixLength, ReadName),
+                {cloudi_args_type:service_name_suffix(Prefix, ReadName),
                  undefined, undefined};
             {[_ | _] = ReadName, ReadSegmentI}
                 when is_integer(ReadSegmentI) orelse
                      (ReadSegmentI =:= undefined) ->
-                true = lists:prefix(Prefix, ReadName),
-                {lists:nthtail(PrefixLength, ReadName),
+                {cloudi_args_type:service_name_suffix(Prefix, ReadName),
                  ReadSegmentI, undefined};
             {[_ | _] = ReadName, {ReadSegmentI, ReadSegmentSize}}
                 when (is_integer(ReadSegmentI) orelse
@@ -400,8 +398,7 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
                      ((is_integer(ReadSegmentSize) andalso
                        (ReadSegmentSize >= 0)) orelse
                       (ReadSegmentSize =:= undefined)) ->
-                true = lists:prefix(Prefix, ReadName),
-                {lists:nthtail(PrefixLength, ReadName),
+                {cloudi_args_type:service_name_suffix(Prefix, ReadName),
                  ReadSegmentI, ReadSegmentSize}
         end
     end, ReadL0),
@@ -412,9 +409,14 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
                                FilesSizeLimitN, Prefix, Dispatcher),
     MTimeFake = calendar:now_to_universal_time(os:timestamp()),
     Files4 = lists:foldl(fun(Name, Files2) ->
-        true = lists:prefix(Prefix, Name),
-        FileName = lists:nthtail(PrefixLength, Name),
-        case trie:find(Name, Files2) of
+        FileName = cloudi_args_type:service_name_suffix(Prefix, Name),
+        Pattern = if
+            UseHttpGetSuffix =:= true ->
+                Name ++ "/get";
+            UseHttpGetSuffix =:= false ->
+                Name
+        end,
+        case trie:find(Pattern, Files2) of
             {ok, #file{access = Access,
                        write = []} = File}
                 when Access =:= read_write ->
@@ -424,6 +426,8 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
                 file_refresh(FileName, NewFile,
                              Files3, true, Prefix);
             {ok, #file{path = FilePath}} ->
+                ?LOG_ERROR("unable to read and write file: \"~s\"",
+                           [FilePath]),
                 erlang:exit({eacces, FilePath}),
                 Files2;
             error ->
@@ -443,9 +447,14 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
         end
     end, Files1, WriteTruncateL),
     Files7 = lists:foldl(fun(Name, Files5) ->
-        true = lists:prefix(Prefix, Name),
-        FileName = lists:nthtail(PrefixLength, Name),
-        case trie:find(Name, Files5) of
+        FileName = cloudi_args_type:service_name_suffix(Prefix, Name),
+        Pattern = if
+            UseHttpGetSuffix =:= true ->
+                Name ++ "/get";
+            UseHttpGetSuffix =:= false ->
+                Name
+        end,
+        case trie:find(Pattern, Files5) of
             {ok, #file{access = Access,
                        write = Write} = File}
                 when Access =:= read_write ->
@@ -455,6 +464,8 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
                 file_refresh(FileName, NewFile,
                              Files6, true, Prefix);
             {ok, #file{path = FilePath}} ->
+                ?LOG_ERROR("unable to read and write file: \"~s\"",
+                           [FilePath]),
                 erlang:exit({eacces, FilePath}),
                 Files5;
             error ->
@@ -486,6 +497,8 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
             {ok, _, Files9} ->
                 Files9;
             {error, Reason} ->
+                ?LOG_ERROR("notification name does not exist: \"~s\"",
+                           [NameOne]),
                 erlang:exit({Reason, NameOne}),
                 Files8
         end
@@ -501,6 +514,8 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
             {ok, _, Files12} ->
                 Files12;
             {error, Reason} ->
+                ?LOG_ERROR("notification name does not exist: \"~s\"",
+                           [NameAll]),
                 erlang:exit({Reason, NameAll}),
                 Files11
         end
@@ -530,7 +545,7 @@ cloudi_service_init(Args, Prefix, _Timeout, Dispatcher) ->
             ok
     end,
     {ok, #state{prefix = Prefix,
-                prefix_length = PrefixLength,
+                prefix_length = erlang:length(Prefix),
                 service = Service,
                 directory = Directory,
                 directory_length = DirectoryLength,
@@ -1060,7 +1075,7 @@ request_append_file([{Range, Request} | RangeRequests],
                 I >= 0 ->
                     I
             end,
-            ByteEnd = ContentLength - 1,
+            ByteEnd = ByteStart + erlang:byte_size(RequestBin) - 1,
             {ByteStart, ByteEnd};
         {IStart, IEnd} ->
             ByteStart = if
@@ -1071,18 +1086,13 @@ request_append_file([{Range, Request} | RangeRequests],
             end,
             ByteEnd = IEnd,
             {ByteStart, ByteEnd};
-        I ->
-            ByteStart = if
-                I < 0 ->
-                    ContentLength + I;
-                I >= 0 ->
-                    I
-            end,
-            ByteEnd = ContentLength - 1,
+        I when I < 0 ->
+            ByteStart = ContentLength + I,
+            ByteEnd = ByteStart + erlang:byte_size(RequestBin) - 1,
             {ByteStart, ByteEnd}
     end,
     if
-        Start =< End, Start =< ContentLength ->
+        Start =< End ->
             NewContents = if
                 End < ContentLength ->
                     StartBinBits = Start * 8,
@@ -1101,6 +1111,11 @@ request_append_file([{Range, Request} | RangeRequests],
                       RequestBin/binary>>;
                 Start == ContentLength ->
                     <<Contents/binary,
+                      RequestBin/binary>>;
+                Start > ContentLength ->
+                    GapBits = (Start - ContentLength) * 8,
+                    <<Contents/binary,
+                      0:GapBits,
                       RequestBin/binary>>
             end,
             request_append_file(RangeRequests,
