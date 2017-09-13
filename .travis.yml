@@ -1,6 +1,6 @@
 language: erlang
 otp_release:
-  - 20.0
+  #- 20.0 # cowlib 1.0.0 has errors
   - 19.3
 before_script:
   - rebar get-deps
