@@ -126,7 +126,7 @@
 -define(DEFAULT_USE_HTTP_GET_SUFFIX,      true). % see below:
         % Uses the "/get" suffix on service name patterns used for
         % subscriptions as would be used from HTTP related senders like
-        % cloudi_service_http_cowboy.  Required for write-related
+        % cloudi_service_http_cowboy1.  Required for write-related
         % functionality and reading ranges.
 
 -type read_list_exact() :: list({string(),
