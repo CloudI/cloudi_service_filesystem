@@ -3,7 +3,7 @@
 
 {application, cloudi_service_filesystem, 
   [{description, "Filesystem CloudI Service"},
-   {vsn, "1.7.4"},
+   {vsn, "1.7.5"},
    {modules, [
         cloudi_service_filesystem,
         cloudi_service_filesystem_parse
