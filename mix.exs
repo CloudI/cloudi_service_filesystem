@@ -6,7 +6,7 @@ defmodule CloudIServiceFilesystem do
 
   def project do
     [app: :cloudi_service_filesystem,
-     version: "2.0.0",
+     version: "2.0.1",
      language: :erlang,
      erlc_options: [
        :debug_info,
@@ -29,7 +29,7 @@ defmodule CloudIServiceFilesystem do
   end
 
   defp deps do
-    [{:cloudi_core, "~> 2.0.0"},
+    [{:cloudi_core, "~> 2.0.1"},
      {:cowlib, "~> 1.0.2"}]
   end
 
@@ -38,7 +38,7 @@ defmodule CloudIServiceFilesystem do
   end
 
   defp package do
-    [files: ~w(src doc test rebar.config README.markdown),
+    [files: ~w(src doc test rebar.config README.markdown LICENSE),
      maintainers: ["Michael Truog"],
      licenses: ["MIT"],
      links: %{"Website" => "https://cloudi.org",
