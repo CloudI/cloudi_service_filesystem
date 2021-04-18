@@ -5,8 +5,7 @@
   [{description, "Filesystem CloudI Service"},
    {vsn, "2.0.1"},
    {modules, [
-        cloudi_service_filesystem,
-        cloudi_service_filesystem_parse
+        cloudi_service_filesystem
         ]},
    {registered, []},
    {applications, [
