@@ -6,7 +6,7 @@ defmodule CloudIServiceFilesystem do
 
   def project do
     [app: :cloudi_service_filesystem,
-     version: "2.0.1",
+     version: "2.0.2",
      language: :erlang,
      erlc_options: [
        :debug_info,
@@ -29,8 +29,8 @@ defmodule CloudIServiceFilesystem do
   end
 
   defp deps do
-    [{:cloudi_core, "~> 2.0.1"},
-     {:cowlib, "~> 1.0.2"}]
+    [{:cloudi_core, "~> 2.0.2"},
+     {:cowlib, "~> 2.11.0"}]
   end
 
   defp description do

@@ -13,9 +13,9 @@
 <ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
    <h3><a name="CloudI_Filesystem">CloudI Filesystem</a></h3>
    A service that caches filesystem data for quick responses.
-<p>Copyright © 2011-2020 Michael Truog</p>
+<p>Copyright © 2011-2021 Michael Truog</p>
 
-<p><b>Version:</b> 2.0.1 Nov 26 2020 18:12:46
+<p><b>Version:</b> 2.0.2 May 26 2021 21:01:39
   ------------------------------------------------------------------------</p>
 <p><b>Behaviours:</b> <a href="deps/cloudi_core/doc/cloudi_service.html"><tt>cloudi_service</tt></a>.</p>
 <p><b>Authors:</b> Michael Truog (<a href="mailto:mjtruog at protonmail dot com"><tt>mjtruog at protonmail dot com</tt></a>).</p>
@@ -73,68 +73,79 @@
 <h3 class="function"><a name="cloudi_service_handle_info-3">cloudi_service_handle_info/3</a></h3>
 <div class="spec">
 <p><tt>cloudi_service_handle_info(Request, State, Dispatcher) -&gt; any()</tt></p>
+<p> </p>
 </div>
 
 <h3 class="function"><a name="cloudi_service_handle_request-11">cloudi_service_handle_request/11</a></h3>
 <div class="spec">
 <p><tt>cloudi_service_handle_request(RequestType, Name, Pattern, RequestInfo, File_notify, Timeout, Priority, TransId, Pid, State, Dispatcher) -&gt; any()</tt></p>
+<p> </p>
 </div>
 
 <h3 class="function"><a name="cloudi_service_init-4">cloudi_service_init/4</a></h3>
 <div class="spec">
 <p><tt>cloudi_service_init(Args, Prefix, Timeout, Dispatcher) -&gt; any()</tt></p>
+<p> </p>
 </div>
 
 <h3 class="function"><a name="cloudi_service_terminate-3">cloudi_service_terminate/3</a></h3>
 <div class="spec">
 <p><tt>cloudi_service_terminate(Reason, Timeout, State) -&gt; any()</tt></p>
+<p> </p>
 </div>
 
 <h3 class="function"><a name="notify_all-3">notify_all/3</a></h3>
 <div class="spec">
-<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_all_service_processes_to_be_notified_of_file_updates.">Subscribe all service processes to be notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
 
 <h3 class="function"><a name="notify_all-4">notify_all/4</a></h3>
 <div class="spec">
-<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_all_service_processes_to_be_notified_of_file_updates.">Subscribe all service processes to be notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
 
 <h3 class="function"><a name="notify_all-5">notify_all/5</a></h3>
 <div class="spec">
-<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>, NotifyPriority::<a href="#type-priority">priority()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_all(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>, NotifyPriority::<a href="#type-priority">priority()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_all_service_processes_to_be_notified_of_file_updates.">Subscribe all service processes to be notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
 
 <h3 class="function"><a name="notify_clear-2">notify_clear/2</a></h3>
 <div class="spec">
-<p><tt>notify_clear(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>) -&gt; {ok | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_clear(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>) -&gt; {ok | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Clear_all_notification_subscriptions_for_a_file.">Clear all notification subscriptions for a file.</a></h4>
 </p>
 
 <h3 class="function"><a name="notify_one-3">notify_one/3</a></h3>
 <div class="spec">
-<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_to_have_a_service_process_notified_of_file_updates.">Subscribe to have a service process notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
 
 <h3 class="function"><a name="notify_one-4">notify_one/4</a></h3>
 <div class="spec">
-<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_to_have_a_service_process_notified_of_file_updates.">Subscribe to have a service process notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
 
 <h3 class="function"><a name="notify_one-5">notify_one/5</a></h3>
 <div class="spec">
-<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>, NotifyPriority::<a href="#type-priority">priority()</a>) -&gt; {{ok, binary()} | {error, any()}, NewAgent::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p><tt>notify_one(Agent::<a href="#type-agent">agent()</a>, Name::<a href="#type-service_name">service_name()</a>, NotifyName::<a href="#type-service_name">service_name()</a>, NotifyTimeout::<a href="#type-timeout_milliseconds">timeout_milliseconds()</a>, NotifyPriority::<a href="#type-priority">priority()</a>) -&gt; {{ok, binary()} | {error, any()}, AgentNew::<a href="#type-agent">agent()</a>}</tt><br></p>
+<p> </p>
 </div><p>
   <h4><a name="Subscribe_to_have_a_service_process_notified_of_file_updates.">Subscribe to have a service process notified of file updates.</a></h4>
   The current file contents is returned, if the file is found.</p>
